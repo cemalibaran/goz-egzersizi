@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Göz Sağlığı Egzersizi</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      font-size: 2.5em;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+
+    #dot {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle, #ff6b6b, #ff4757);
+      border-radius: 50%;
+      box-shadow: 0 0 20px #ff6b6b, 0 0 40px #ff6b6b;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      border: 3px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      display: none;
+      z-index: 10;
+    }
+
+    .controls {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .control-group {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: 600;
+      min-width: 80px;
+    }
+
+    select, button {
+      padding: 10px 15px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    select:hover, button:hover {
+      background: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+
+    select:disabled, button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button {
+      font-weight: 600;
+      min-width: 80px;
+    }
+
+    #startBtn {
+      background: linear-gradient(45deg, #4ecdc4, #44a08d);
+    }
+
+    #stopBtn {
+      background: linear-gradient(45deg, #ff6b6b, #ff4757);
+    }
+
+    #pauseBtn {
+      background: linear-gradient(45deg, #ffa726, #ff9800);
+    }
+
+    .status {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      text-align: center;
+      min-width: 300px;
+    }
+
+    #timer {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    #score {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    #level {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .exercise-types {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .exercise-btn {
+      padding: 10px 20px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.3);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+
+    .exercise-btn.active {
+      background: rgba(255,255,255,0.3);
+      border-color: #4ecdc4;
+      box-shadow: 0 0 15px rgba(78,205,196,0.5);
+    }
+
+    .exercise-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.2);
+    }
+
+    .advanced-options {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .health-tips {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .health-tips h3 {
+      margin-top: 0;
+      color: #4ecdc4;
+    }
+
+    .blink-reminder {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,107,107,0.9);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 25px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+      display: none;
+      z-index: 999;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(45deg, #4ecdc4, #44a08d);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .target-dot {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.6);
+      border: 2px dashed #4ecdc4;
+      pointer-events: none;
+      z-index: 5;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        padding: 15px;
+      }
+
+      .control-group {
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .exercise-types {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>👁️ Göz Sağlığı Egzersizi</h1>
+  <p class="subtitle">Gözlerinizi güçlendirin ve dijital yorgunluğu azaltın</p>
+  
+  <div class="exercise-types">
+    <div class="exercise-btn active" data-type="random">🎯 Rastgele Takip</div>
+    <div class="exercise-btn" data-type="circle">⭕ Dairesel Hareket</div>
+    <div class="exercise-btn" data-type="cross">➕ Çapraz Hareket</div>
+    <div class="exercise-btn" data-type="figure8">∞ Sekiz Şekli</div>
+    <div class="exercise-btn" data-type="focus">🔎 Yakın-Uzak Odak</div>
+    <div class="exercise-btn" data-type="peripheral">👀 Çevresel Görüş</div>
+  </div>
+
+  <div class="advanced-options">
+    <label><input type="checkbox" id="showTargets" /> Hedef Noktaları Göster</label>
+    <label><input type="checkbox" id="soundFeedback" checked /> Sesli Geri Bildirim</label>
+    <label><input type="checkbox" id="colorBlind" /> Renk Körlüğü Modu</label>
+  </div>
+
+  <div class="status">
+    <div id="timer">Süre: 60</div>
+    <div id="score">Puan: 0</div>
+    <div id="level">Seviye: 1</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Hız:</label>
+      <select id="speed">
+        <option value="2000">Çok Yavaş</option>
+        <option value="1500">Yavaş</option>
+        <option value="1000" selected>Normal</option>
+        <option value="600">Hızlı</option>
+        <option value="400">Çok Hızlı</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Süre:</label>
+      <select id="duration">
+        <option value="30">30 saniye</option>
+        <option value="60" selected>1 dakika</option>
+        <option value="120">2 dakika</option>
+        <option value="300">5 dakika</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <button id="startBtn">🚀 Başlat</button>
+      <button id="pauseBtn" disabled>⏸️ Duraklat</button>
+      <button id="stopBtn" disabled>⏹️ Durdur</button>
+    </div>
+  </div>
+
+  <div class="blink-reminder" id="blinkReminder">
+    💡 Göz kırpmayı unutmayın!
+  </div>
+
+  <div id="dot"></div>
+  <div class="target-dot" id="targetDot1"></div>
+  <div class="target-dot" id="targetDot2"></div>
+
+  <div class="health-tips">
+    <h3>💡 Göz Sağlığı İpuçları</h3>
+    <p><strong>20-20-20 Kuralı:</strong> Her 20 dakikada bir, 20 saniye boyunca 20 feet (6 metre) uzaktaki bir objeye bakın.</p>
+    <p><strong>Göz Kırpma:</strong> Bilgisayar kullanırken göz kırpma sıklığınız azalır. Bilinçli olarak göz kırpmaya özen gösterin.</p>
+    <p><strong>Düzenli Egzersiz:</strong> Bu egzersizi günde 2-3 kez yapmak göz kaslarınızı güçlendirir.</p>
+  </div>
+
+  <audio id="successSound" src="https://cdn.pixabay.com/audio/2022/10/16/audio_12d7cb2b4f.mp3"></audio>
+  <audio id="levelupSound" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa2b2c.mp3"></audio>
+  <audio id="errorSound" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa2b2c.mp3"></audio>
+
+  <script>
+    // HTML Elementleri
+    const dot = document.getElementById("dot");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const speedSelect = document.getElementById("speed");
+    const durationSelect = document.getElementById("duration");
+    const timerEl = document.getElementById("timer");
+    const scoreEl = document.getElementById("score");
+    const levelEl = document.getElementById("level");
+    const progressFill = document.getElementById("progressFill");
+    const blinkReminder = document.getElementById("blinkReminder");
+    const exerciseButtons = document.querySelectorAll(".exercise-btn");
+    const showTargets = document.getElementById("showTargets");
+    const soundFeedback = document.getElementById("soundFeedback");
+    const colorBlind = document.getElementById("colorBlind");
+    const successSound = document.getElementById("successSound");
+    const levelupSound = document.getElementById("levelupSound");
+    const errorSound = document.getElementById("errorSound");
+    const targetDot1 = document.getElementById("targetDot1");
+    const targetDot2 = document.getElementById("targetDot2");
+    
+    // Oyun Değişkenleri
+    let intervalId, countdownId, blinkReminderId, focusIntervalId, focusBlurId;
+    let timeLeft = 60;
+    let totalTime = 60;
+    let score = 0;
+    let level = 1;
+    let isRunning = false;
+    let isPaused = false;
+    let currentExercise = 'random';
+    let dotClicks = 0;
+    let angle = 0;
+    let step = 0;
+    let focusNear = true;
+    let peripheralStep = 0;
+    let lastDotPos = {x:0,y:0};
+
+    // Egzersiz türü seçimi
+    exerciseButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (isRunning) return;
+        exerciseButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentExercise = btn.dataset.type;
+        setTargets();
+      });
+    });
+
+    // Noktaya tıklama olayı
+    dot.addEventListener('click', () => {
+      if (isRunning && !isPaused) {
+        score += level * 10;
+        dotClicks++;
+        updateScore();
+        if(soundFeedback.checked) playSound(successSound);
+
+        // Görsel geri bildirim
+        dot.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          dot.style.transform = 'scale(1)';
+        }, 150);
+      }
+    });
+
+    function updateScore() {
+      scoreEl.textContent = `Puan: ${score}`;
+      // Seviye artırma
+      const newLevel = Math.floor(dotClicks / 10) + 1;
+      if (newLevel > level) {
+        level = newLevel;
+        levelEl.textContent = `Seviye: ${level}`;
+        if(soundFeedback.checked) playSound(levelupSound);
+
+        // Seviye arttığında hız artır
+        const currentSpeed = parseInt(speedSelect.value);
+        const newSpeed = Math.max(200, currentSpeed - 100);
+        speedSelect.value = newSpeed;
+      }
+    }
+
+    function playSound(audioElement) {
+      try {
+        audioElement.currentTime = 0;
+        audioElement.play();
+      } catch(e) {}
+    }
+
+    function colorBlindMode(on) {
+      if(on) {
+        dot.style.background = 'radial-gradient(circle, #d8d800, #7a7a52)';
+        dot.style.boxShadow = '0 0 20px #d8d800, 0 0 40px #7a7a52';
+        dot.style.borderColor = "#333";
+        targetDot1.style.borderColor = "#d8d800";
+        targetDot2.style.borderColor = "#d8d800";
+      } else {
+        dot.style.background = 'radial-gradient(circle, #ff6b6b, #ff4757)';
+        dot.style.boxShadow = '0 0 20px #ff6b6b, 0 0 40px #ff6b6b';
+        dot.style.borderColor = "rgba(255,255,255,0.3)";
+        targetDot1.style.borderColor = "#4ecdc4";
+        targetDot2.style.borderColor = "#4ecdc4";
+      }
+    }
+
+    colorBlind.addEventListener('change', e => colorBlindMode(e.target.checked));
+
+    function moveDot() {
+      const maxX = window.innerWidth - 50;
+      const maxY = window.innerHeight - 50;
+      let x, y;
+
+      switch (currentExercise) {
+        case 'random':
+          x = Math.random() * maxX;
+          y = Math.random() * maxY;
+          break;
+        case 'circle':
+          const centerX = maxX / 2;
+          const centerY = maxY / 2;
+          const radius = Math.min(maxX, maxY) / 3;
+          angle += Math.PI / 8;
+          x = centerX + radius * Math.cos(angle);
+          y = centerY + radius * Math.sin(angle);
+          break;
+        case 'cross':
+          const positions = [
+            [maxX / 2, 50], // üst
+            [maxX - 50, maxY / 2], // sağ
+            [maxX / 2, maxY - 50], // alt
+            [50, maxY / 2] // sol
+          ];
+          const pos = positions[step % 4];
+          x = pos[0];
+          y = pos[1];
+          step++;
+          break;
+        case 'figure8':
+          const centerX8 = maxX / 2;
+          const centerY8 = maxY / 2;
+          const radiusX = maxX / 4;
+          const radiusY = maxY / 6;
+          angle += Math.PI / 12;
+          x = centerX8 + radiusX * Math.sin(angle);
+          y = centerY8 + radiusY * Math.sin(2 * angle);
+          break;
+        case 'focus':
+          // Yakın-Uzak: Yakın noktada büyük, uzak noktada küçük ve farklı konum
+          const nearX = maxX / 2 - 60; // biraz sola
+          const nearY = maxY / 2 + 50; // biraz aşağıya
+          const farX = maxX / 2 + 100;
+          const farY = maxY / 2 - 100;
+          if (focusNear) {
+            x = nearX;
+            y = nearY;
+            dot.style.width = "70px";
+            dot.style.height = "70px";
+          } else {
+            x = farX;
+            y = farY;
+            dot.style.width = "30px";
+            dot.style.height = "30px";
+          }
+          focusNear = !focusNear;
+          break;
+        case 'peripheral':
+          // Çevresel görüş: ekranın dört köşesine sırayla
+          const perPos = [
+            [10, 10],
+            [maxX - 10, 10],
+            [10, maxY - 10],
+            [maxX - 10, maxY - 10]
+          ];
+          const p = perPos[peripheralStep % 4];
+          x = p[0];
+          y = p[1];
+          peripheralStep++;
+          break;
+      }
+      lastDotPos = {x, y};
+
+      dot.style.left = Math.max(0, Math.min(maxX, x)) + "px";
+      dot.style.top = Math.max(0, Math.min(maxY, y)) + "px";
+    }
+
+    function setTargets() {
+      // Hedef noktaları gösterme (örnek: dairede/matrisde)
+      if (showTargets.checked) {
+        if (currentExercise === "circle" || currentExercise === "figure8") {
+          const maxX = window.innerWidth - 50;
+          const maxY = window.innerHeight - 50;
+          targetDot1.style.display = "block";
+          targetDot2.style.display = "block";
+          // Circle için
+          if (currentExercise === "circle") {
+            const centerX = maxX / 2;
+            const centerY = maxY / 2;
+            const radius = Math.min(maxX, maxY) / 3;
+            targetDot1.style.left = (centerX + radius) + "px";
+            targetDot1.style.top = centerY + "px";
+            targetDot2.style.left = (centerX - radius) + "px";
+            targetDot2.style.top = centerY + "px";
+          } else if (currentExercise === "figure8") {
+            const centerX8 = maxX / 2;
+            const centerY8 = maxY / 2;
+            const radiusX = maxX / 4;
+            const radiusY = maxY / 6;
+            targetDot1.style.left = (centerX8 + radiusX) + "px";
+            targetDot1.style.top = (centerY8 + radiusY) + "px";
+            targetDot2.style.left = (centerX8 - radiusX) + "px";
+            targetDot2.style.top = (centerY8 - radiusY) + "px";
+          }
+        } else {
+          targetDot1.style.display = "none";
+          targetDot2.style.display = "none";
+        }
+      } else {
+        targetDot1.style.display = "none";
+        targetDot2.style.display = "none";
+      }
+    }
+
+    showTargets.addEventListener('change', setTargets);
+
+    function startGame() {
+      totalTime = parseInt(durationSelect.value);
+      timeLeft = totalTime;
+      score = 0;
+      level = 1;
+      dotClicks = 0;
+      angle = 0;
+      step = 0;
+      focusNear = true;
+      peripheralStep = 0;
+      updateScore();
+      levelEl.textContent = `Seviye: ${level}`;
+      timerEl.textContent = `Süre: ${timeLeft}`;
+      progressFill.style.width = "0%";
+
+      setTargets();
+      moveDot();
+      dot.style.display = "block";
+
+      if (colorBlind.checked) colorBlindMode(true);
+      else colorBlindMode(false);
+
+      if(currentExercise === "focus") {
+        intervalId = setInterval(moveDot, 1200); // Yakın-uzak için farklı hız
+      } else {
+        intervalId = setInterval(moveDot, parseInt(speedSelect.value));
+      }
+
+      countdownId = setInterval(() => {
+        if (!isPaused) {
+          timeLeft--;
+          timerEl.textContent = `Süre: ${timeLeft}`;
+          const progress = ((totalTime - timeLeft) / totalTime) * 100;
+          progressFill.style.width = progress + '%';
+          if (timeLeft <= 0) {
+            stopGame();
+            showResult();
+          }
+        }
+      }, 1000);
+
+      blinkReminderId = setInterval(() => {
+        if (!isPaused) {
+          blinkReminder.style.display = 'block';
+          setTimeout(() => {
+            blinkReminder.style.display = 'none';
+          }, 3000);
+        }
+      }, 15000);
+
+      isRunning = true;
+      isPaused = false;
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+      stopBtn.disabled = false;
+      speedSelect.disabled = true;
+      durationSelect.disabled = true;
+      showTargets.disabled = true;
+      soundFeedback.disabled = true;
+      colorBlind.disabled = true;
+    }
+
+    function pauseGame() {
+      isPaused = !isPaused;
+      if (isPaused) {
+        clearInterval(intervalId);
+        pauseBtn.textContent = '▶️ Devam';
+        dot.style.display = 'none';
+      } else {
+        if(currentExercise === "focus") {
+          intervalId = setInterval(moveDot, 1200);
+        } else {
+          intervalId = setInterval(moveDot, parseInt(speedSelect.value));
+        }
+        pauseBtn.textContent = '⏸️ Duraklat';
+        dot.style.display = 'block';
+      }
+    }
+
+    function stopGame() {
+      clearInterval(intervalId);
+      clearInterval(countdownId);
+      clearInterval(blinkReminderId);
+      dot.style.display = "none";
+      isRunning = false;
+      isPaused = false;
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      stopBtn.disabled = true;
+      speedSelect.disabled = false;
+      durationSelect.disabled = false;
+      showTargets.disabled = false;
+      soundFeedback.disabled = false;
+      colorBlind.disabled = false;
+      pauseBtn.textContent = '⏸️ Duraklat';
+      blinkReminder.style.display = 'none';
+      setTargets();
+    }
+
+    function showResult() {
+      const accuracy = Math.round((score / (totalTime * level * 10)) * 100) || 0;
+      setTimeout(() => {
+        alert(`🎉 Tebrikler!\n\nSonuçlarınız:\n• Puan: ${score}\n• Seviye: ${level}\n• İsabet Oranı: ${accuracy}%\n• Toplam Tıklama: ${dotClicks}\n\nGöz sağlığınız için düzenli egzersiz yapmaya devam edin!`);
+      }, 500);
+    }
+
+    startBtn.addEventListener("click", startGame);
+    stopBtn.addEventListener("click", stopGame);
+    pauseBtn.addEventListener("click", pauseGame);
+
+    // Klavye kısayolları
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !isRunning) {
+        e.preventDefault();
+        startGame();
+      } else if (e.code === 'Escape' && isRunning) {
+        e.preventDefault();
+        stopGame();
+      } else if (e.code === 'KeyP' && isRunning) {
+        e.preventDefault();
+        pauseGame();
+      }
+    });
+
+    // Pencere boyutu değiştiğinde noktaları yeniden konumlandır
+    window.addEventListener('resize', () => {
+      if (isRunning) {
+        moveDot();
+      }
+      setTargets();
+    });
+
+    // İlk hedef noktaları ayarla
+    setTargets();
+
+  </script>
+</body>
+</html>
