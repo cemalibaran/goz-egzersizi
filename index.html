@@ -1,146 +1,449 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Meyveli Çubuklar – 4-6 Yaş (Son)</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Kelime Bulma Oyunu</title>
   <style>
-    body{font-family:Arial,sans-serif;text-align:center;background:#f9f9f9;transition:background .3s,color .3s}
-    h1{color:#333}
-    .controls button{margin:5px;padding:10px 15px;font-size:16px;cursor:pointer;border:1px solid #999;background:#fff}
-    .controls button.aktif{background:#2ecc71;color:#fff;border-color:#2ecc71}
-    #gameArea{margin-top:30px}
-    #targetWrapper{width:600px;height:50px;border:2px solid #666;margin:10px auto;position:relative;background:#eee;display:flex;overflow:visible}
-    #targetFill{height:100%;width:100%;position:relative}
-    .divider{border-right:2px dashed #666;height:100%;position:absolute;top:0;z-index:5;pointer-events:none}
-    .smallBar{width:50px;height:40px;margin:2px;cursor:pointer;border-radius:5px;color:white;font-weight:bold;display:flex;align-items:center;justify-content:center;user-select:none;font-size:14px;position:relative;overflow:hidden;white-space:nowrap}
-    .placedPart{position:absolute;height:100%;top:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;z-index:3;cursor:grab;overflow:hidden;white-space:nowrap}
-    #pieces{display:flex;justify-content:center;margin-top:10px;flex-wrap:wrap;max-width:900px;margin-left:auto;margin-right:auto}
-    #lengthInput{width:80px;padding:5px;font-size:16px}
-    #buyukSayi{position:fixed;inset:0;background:rgba(0,0,0,.7);color:white;font-size:30vh;display:none;align-items:center;justify-content:center;z-index:999}
-    body.gece{background:#222;color:#eee}
-    body.gece #targetWrapper{border-color:#ccc;background:#444}
-    @keyframes fadeInOut{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.5)}}
-    .fruit-icon{font-size:20px;margin:0 1px}
-    .overflowBar{background-color:#ff0000!important;opacity:.7;position:absolute;height:100%;top:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;z-index:4}
-    .number-label{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:bold;color:#333;z-index:10}
-    .smallBar .number-label{top:-20px;font-size:14px}
-    .fruit-container{display:flex;width:100%;height:100%;position:relative;flex-wrap:wrap;align-items:center;justify-content:center}
-    .fruit-segment{flex:1 0 auto;display:flex;align-items:center;justify-content:center}
-    .center-number{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:bold;color:#000;text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff;z-index:2}
-    #btnSerbest.aktif{background:#2ecc71;color:#fff;border-color:#2ecc71}
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:20px;background:#f7f9fc;color:#222}
+    .container{max-width:900px;margin:auto}
+    .controls{margin-bottom:20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .word{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
+    .slot{width:40px;height:50px;border:2px solid #444;display:flex;align-items:center;justify-content:center;font-size:22px;background:#fff;transition:border .25s}
+    .slot.drag-over{border:3px solid #3b82f6 !important}
+    .slot.filled{background:#e0ffe0}
+    .keyboard{display:grid;grid-template-columns:repeat(11,1fr);gap:6px}
+    .key{padding:16px;font-size:20px;background:#e2e8f0;text-align:center;border-radius:8px;cursor:pointer;user-select:none;transition:background 0.3s,color 0.3s}
+    .key.used{cursor:not-allowed}
+    .key.blue{background:#3b82f6;color:#fff !important}
+    .key.green{background:#22c55e;color:#fff !important}
+    .key.red{background:#ef4444;color:#fff !important}
+    .key.vowel{font-weight:bold;color:purple}
+    .key.consonant{color:#888}
+    #status{margin-top:15px;font-weight:bold}
+    #wordBankBox{width:100%;height:80px}
+    .bank-section{margin-bottom:20px}
+    .syllables{margin-top:10px;font-size:18px;font-weight:bold;color:#1e3a8a}
+    /* Tematik görsel stilleri */
+    .thematic-image{width:200px;height:130px;margin:20px auto;border:3px solid #ccc;border-radius:10px;overflow:hidden;position:relative}
+    .puzzle-piece{position:absolute;width:100%;height:100%;background-image:var(--img);background-size:calc(var(--cols) * 100%) calc(var(--rows) * 100%);background-position:var(--pos);transition:opacity .5s}
+    .puzzle-mask{position:absolute;inset:0;background:#6b7280;opacity:.9}
+    .puzzle-revealed{opacity:0}
+    #completeImage{display:none;width:100%;height:100%;object-fit:cover}
+    .progress-text{text-align:center;font-weight:bold;margin-top:10px;color:#1e40af}
+
+
+  #wordList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  #wordList li {
+    background: #e2e8f0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    text-align: left;
+    font-weight: 500;
+  }
+
+
+
   </style>
 </head>
 <body>
-  <h1>Meyveli Çubuklarla Saymayı Öğreniyorum</h1>
-  <div class="controls">
-    <button onclick="setStepAndStart(1)" id="btn1">1'er</button>
-    <button onclick="setStepAndStart(2)" id="btn2">2'şer</button>
-    <button onclick="setStepAndStart(3)" id="btn3">3'er</button>
-    <button onclick="setStepAndStart(4)" id="btn4">4'er</button>
-    <button onclick="setStepAndStart(5)" id="btn5">5'er</button>
-    <button onclick="toggleTema()">🌞 Gece/Gündüz 🌙</button>
-    <button id="sesBtn" onclick="toggleSes()">🔊 Ses Aç/Kapa</button>
-    <button id="btnSerbest" onclick="toggleSerbest()">Serbest Yerleştir</button>
-    <br>
-    <input type="number" id="lengthInput" placeholder="Hedef" min="1" max="40">
-  </div>
-  <div id="message"></div>
+  <div class="container">
+    
+      <button id="mathBtn">Matematik Oyununa Gir!</button> <!-- Yeni Button -->
+   
+<h1>Kelime Bulma Oyunu</h1>
+    <!-- Havuz seçici -->
+    <div class="controls">
 
-  <div id="gameArea" style="display:none;">
-    <h2>Yerleştirme Oyunu</h2>
-    <p>Hedef uzunluk: <span id="targetLength"></span></p>
-    <div id="targetWrapper">
-      <div id="targetFill"></div>
+        <select id="poolSelect">
+          <option value="isim">İsim</option>
+          <option value="sifat">Sıfat</option>
+          <option value="fiil">Fiil</option>
+          <option value="karma" selected>Karma</option>
+        </select>
+      </label>
     </div>
-    <div id="pieces"></div>
-    <p id="gameMessage"></p>
+
+    <!-- Kelime Havuzu Düzenleyici -->
+    <div class="bank-section">
+      <label for="wordBankBox"><strong>Kelime Havuzu (<span id="poolLabel">Karma</span>)</strong></label><br>
+      <textarea id="wordBankBox" placeholder="Kelimeleri virgül ile ayırın"></textarea><br>
+      <button id="saveBank">Havuzu Kaydet</button>
+      <p><strong>Alfabetik Sıra:</strong></p>
+      <ul id="wordList"></ul>
+    </div>
+
+    <!-- Oyun Kontrolleri -->
+    <div class="controls">
+      <label>Harf sayısı:
+        <select id="length">
+          <option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option><option>9</option>
+          <option selected>10</option>
+        </select>
+      </label>
+      <button id="newGame">Yeni Oyun</button>
+      <button id="clearGame" title="Sorulan kelimeyi temizle" style="font-size:20px">🗑️</button>
+        
+    </div>
+
+    <div id="word" class="word"></div>
+    <div id="syllables" class="syllables"></div>
+
+    <!-- Tematik görsel -->
+    <div class="thematic-image">
+      <div id="puzzleContainer"></div>
+      <img id="completeImage" src="" alt="Tamamlanan Görsel">
+      <div class="progress-text" id="progressText">Görsel kilitli: 0/0 harf</div>
+    </div>
+
+    <div id="keyboard" class="keyboard"></div>
+
+    <div style="margin-top:15px">
+      <input id="fullGuess" placeholder="Tüm kelimeyi tahmin et"/>
+      <button id="guessBtn">Tahmin Et</button>
+    </div>
+
+    <p id="status">Oyuna başlamak için "Yeni Oyun"a basın.</p>
   </div>
-  <div id="buyukSayi"></div>
 
-  <script>
-    let step=2,targetLength=0,placed=[],sesAcik=true,serbestMod=false;
-    const fruitInfo={strawberry:{name:'Çilek',color:'#e74c3c',emoji:'🍓'},orange:{name:'Portakal',color:'#f39c12',emoji:'🍊'},tomato:{name:'Domates',color:'#c0392b',emoji:'🍅'},apple:{name:'Elma',color:'#2ecc71',emoji:'🍏'}};
-    const fruitTypes=['strawberry','orange','tomato','apple'];
+<script>
+  const ALPHABET = "abcçdefgğhıijklmnoöprsştuüvyz".split("");
+  const VOWELS = new Set(["a","e","ı","i","o","ö","u","ü"]);
 
-    function toggleSes(){sesAcik=!sesAcik;document.getElementById('sesBtn').innerText=sesAcik?'🔊 Ses Aç/Kapa':'🔇 Ses Aç/Kapa'}
-    function speak(tr){if(!sesAcik||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(tr);u.lang='tr-TR';u.rate=0.8;speechSynthesis.speak(u)}
-    function toggleTema(){document.body.classList.toggle('gece')}
-    function setStepAndStart(n){
-      step=n;
-      // Aktif buton rengi
-      document.querySelectorAll('.controls button').forEach(b=>b.classList.remove('aktif'));
-      document.getElementById('btn'+n).classList.add('aktif');
-      startGame();
+  // 3 ayrı havuz
+  let BANK_ISIM = [], BANK_SIFAT = [], BANK_FIIL = [];
+
+  const poolSelect     = document.getElementById("poolSelect");
+  const lengthSelect   = document.getElementById("length");
+  const newGameBtn     = document.getElementById("newGame");
+  const clearBtn       = document.getElementById("clearGame");
+  const wordEl         = document.getElementById("word");
+  const keyboardEl     = document.getElementById("keyboard");
+  const statusEl       = document.getElementById("status");
+  const guessInput     = document.getElementById("fullGuess");
+  const guessBtn       = document.getElementById("guessBtn");
+  const wordBankBox    = document.getElementById("wordBankBox");
+  const saveBankBtn    = document.getElementById("saveBank");
+  const wordList       = document.getElementById("wordList");
+  const syllablesEl    = document.getElementById("syllables");
+  const puzzleContainer= document.getElementById("puzzleContainer");
+  const completeImage  = document.getElementById("completeImage");
+  const progressText   = document.getElementById("progressText");
+  const poolLabel      = document.getElementById("poolLabel");
+
+  let target = "", revealed = [], used = new Map(), revealedLettersCount = 0;
+
+  // Varsayılan kelimeler
+const DEFAULT_ISIM = [
+  "anne", "baba", "bebek", "el", "ayak", "göz", "burun", "ağız", "kulak",
+  "saç", "baş", "yüz", "kol", "bacak", "karın", "abi", "abla", "dede",
+  "nine", "arkadaş", "öğretmen", "doktor", "polis", "kapı", "araba", "kedi",
+  "köpek", "kuş", "balık", "at", "ev", "oda", "mutfak", "balkon", "okul",
+  "anaokulu", "bahçe", "top", "kaydırak", "salıncak", "kum", "ekmek", "süt",
+  "çay", "meyve", "sebze", "sokak", "park", "market", "hastane", "eczane",
+  "cami", "çarşı", "yol", "köprü", "köy", "şehir", "gün", "gece", "sabah",
+  "öğle", "akşam", "uyku", "su", "çanta", "sandalye"
+];
+
+  const DEFAULT_SIFAT = [
+  "büyük", "küçük", "uzun", "kısa", "geniş", "dar", "yüksek", "alçak",
+  "sıcak", "soğuk", "hızlı", "yavaş", "güzel", "çirkin", "temiz", "kirli",
+  "yeni", "eski", "kolay", "zor", "ağır", "hafif", "sert", "yumuşak",
+  "parlak", "mat", "dolu", "boş", "sağ", "sol", "ön", "arka", "üst", "alt",
+  "iç", "dış", "açık", "kapalı", "sessiz", "gürültülü", "tatlı", "ekşi",
+  "acı", "tuzlu", "sulu", "kuru", "canlı", "cansız", "mutlu", "üzgün",
+  "korkulu", "cesur", "yorgun", "dinç", "sağlıklı", "hasta", "düz",
+  "kavisli", "keskin", "köşeli", "yuvarlak", "renkli", "renksiz",
+  "pürüzsüz", "pütürlü"
+ ];
+
+  const DEFAULT_FIIL = [
+  "yemek", "içmek", "uyumak", "uyanmak", "yıkamak", "temizlemek", "giyinmek",
+  "soyunmak", "yürümek", "koşmak", "zıplamak", "düşmek", "ağlamak", "gülmek",
+  "öpmek", "sarılmak", "sevmek", "vermek", "almak", "koymak", "açmak",
+  "kapatmak", "atmak", "tutmak", "bırakmak", "itmek", "çekmek", "taşımak",
+  "kaldırmak", "indirmek", "sarmak", "bağlamak", "çözmek", "toplamak",
+  "dağıtmak", "saklamak", "bulmak", "kaybetmek", "göstermek", "gizlemek",
+  "bitmek", "başlamak", "durmak", "beklemek", "gelmek", "gitmek", "dönmek",
+  "geçmek", "atlamak", "okumak", "yazmak", "çizmek", "boyamak", "kesmek",
+  "yapıştırmak", "yapmak", "bozmak", "götürmek", "getirmek", "paylaşmak",
+  "yırtmak", "dikmek", "sürmek", "kurmak", "sökmek", "fırlatmak", "savurmak",
+  "kucaklamak", "korkmak", "cesaretlenmek", "dinlenmek"
+];
+
+
+  // Havuz yükleme
+  function loadBanks(){
+    BANK_ISIM  = JSON.parse(localStorage.getItem("BANK_ISIM"))  || DEFAULT_ISIM;
+    BANK_SIFAT = JSON.parse(localStorage.getItem("BANK_SIFAT")) || DEFAULT_SIFAT;
+    BANK_FIIL  = JSON.parse(localStorage.getItem("BANK_FIIL"))  || DEFAULT_FIIL;
+    poolChanged();
+  }
+  function saveBanks(){
+    localStorage.setItem("BANK_ISIM", JSON.stringify(BANK_ISIM));
+    localStorage.setItem("BANK_SIFAT",JSON.stringify(BANK_SIFAT));
+    localStorage.setItem("BANK_FIIL", JSON.stringify(BANK_FIIL));
+  }
+
+  // Aktif havuz değiştiğinde editörü güncelle
+  function poolChanged(){
+    const pool = getCurrentPool();
+    wordBankBox.value = pool.join(", ");
+    poolLabel.textContent = poolSelect.options[poolSelect.selectedIndex].text;
+    updateWordList(pool);
+  }
+
+
+  // Seçili havuzu döndür
+  function getCurrentPool(){
+    switch(poolSelect.value){
+      case "isim":  return BANK_ISIM;
+      case "sifat": return BANK_SIFAT;
+      case "fiil":  return BANK_FIIL;
+      default:      return [...BANK_ISIM, ...BANK_SIFAT, ...BANK_FIIL];
     }
-    function toggleSerbest(){serbestMod=!serbestMod;const b=document.getElementById('btnSerbest');b.classList.toggle('aktif',serbestMod);b.innerText=serbestMod?'Serbest Yerleştir (AÇIK)':'Serbest Yerleştir (KAPALI)'}
+  }
 
-    function startGame(){
-      let v=parseInt(document.getElementById('lengthInput').value)||10;
-      targetLength=v;placed=[];
-      document.getElementById('targetLength').innerHTML=targetLength+' <span style="color:#2ecc71;font-size:28px">(Toplam: 0)</span>';
-      const f=document.getElementById('targetFill');f.innerHTML='';document.getElementById('gameMessage').innerText='';
-      document.getElementById('gameArea').style.display='block';
-      drawDividersOnce();loadPiecesSequential();
+  // Editörden kaydet
+  saveBankBtn.addEventListener("click",()=>{
+    const arr = wordBankBox.value.split(",").map(w=>w.trim()).filter(w=>w);
+    switch(poolSelect.value){
+      case "isim":  BANK_ISIM  = arr; break;
+      case "sifat": BANK_SIFAT = arr; break;
+      case "fiil":  BANK_FIIL  = arr; break;
+      default:
+        // karma havuzu düzenlerken hepsine eşit dağıt (ya da ilkine koy)
+        BANK_ISIM = arr; break;
     }
-    function drawDividersOnce(){const f=document.getElementById('targetFill');for(let i=1;i<targetLength;i++){const d=document.createElement('div');d.className='divider';d.style.left=(i/targetLength*100)+'%';f.appendChild(d)}}
-    function loadPiecesSequential(){
-      const p=document.getElementById('pieces');p.innerHTML='';
-      for(let val=1;val<=10;val++){
-        fruitTypes.forEach(fruit=>{
-          const d=document.createElement('div');d.className='smallBar';d.style.width=(val*20)+'px';d.style.backgroundColor=fruitInfo[fruit].color;
-          const nl=document.createElement('div');nl.className='number-label';nl.innerText=val;d.appendChild(nl);
-          const cn=document.createElement('div');cn.className='center-number';cn.innerText=val;d.appendChild(cn);
-          const fc=document.createElement('div');fc.className='fruit-container';
-          // Tam sayıda meyve göster
-          for(let i=0;i<val;i++){const s=document.createElement('div');s.className='fruit-segment';s.innerHTML='<span class="fruit-icon">'+fruitInfo[fruit].emoji+'</span>';fc.appendChild(s)}
-          d.appendChild(fc);d.dataset.val=val;d.dataset.fruit=fruit;
-          d.addEventListener('click',()=>{speak(val+' '+fruitInfo[fruit].name);if(!serbestMod&&val!==step){uyar('Seçtiğin adımda yalnızca '+step+' birimlik kutular kullanılabilir!');return}placeByClick(val,d)});
-          makeDraggable(d);p.appendChild(d);
-        })
+    saveBanks();
+    poolChanged();
+  });
+
+  poolSelect.addEventListener("change", poolChanged);
+
+  // Rastgele kelime seç
+  function pickRandomWord(n){
+    const pool = getCurrentPool().filter(w=>w.length===n);
+    if(!pool.length) return null;
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
+  /* ---------- TEMATİK GÖRSEL ---------- */
+// 300×200 → 200×130
+const BEAR_IMAGE = "data:image/svg+xml;base64," +
+btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
+  <rect width="100%" height="100%" fill="#785cb4"/>
+  <circle cx="53"  cy="39" r="26" fill="#5ca378"/>
+  <circle cx="147" cy="39" r="26" fill="#5ca378"/>
+  <circle cx="100" cy="65" r="39" fill="#5ca378"/>
+  <circle cx="80"  cy="52" r="10" fill="#fff"/>
+  <circle cx="120" cy="52" r="10" fill="#fff"/>
+  <circle cx="80"  cy="52" r="3"  fill="#000"/>
+  <circle cx="120" cy="52" r="3"  fill="#000"/>
+  <ellipse cx="100" cy="78" rx="10" ry="6" fill="#500"/>
+</svg>`);
+
+  function createThematicPuzzle(){
+    puzzleContainer.innerHTML="";
+    completeImage.style.display="none";
+    completeImage.src=BEAR_IMAGE;
+    const pieceCount=target.length;
+    const rows=Math.ceil(Math.sqrt(pieceCount));
+    const cols=Math.ceil(pieceCount/rows);
+    const pieceW=100/cols, pieceH=100/rows;
+    for(let i=0;i<pieceCount;i++){
+      const r=Math.floor(i/cols), c=i%cols;
+      const piece=document.createElement("div");
+      piece.className="puzzle-piece";
+      piece.style.setProperty("--img",`url(${BEAR_IMAGE})`);
+      piece.style.setProperty("--rows",rows);
+      piece.style.setProperty("--cols",cols);
+      piece.style.setProperty("--pos",`${c*pieceW}% ${r*pieceH}%`);
+      const mask=document.createElement("div");
+      mask.className="puzzle-mask"; mask.id=`mask-${i}`;
+      piece.appendChild(mask); puzzleContainer.appendChild(piece);
+    }
+    revealedLettersCount=0; updateProgressText();
+  }
+  function revealPuzzlePiece(){
+    if(revealedLettersCount<target.length){
+      const m=document.getElementById(`mask-${revealedLettersCount}`);
+      if(m) m.classList.add("puzzle-revealed");
+      revealedLettersCount++;
+      updateProgressText();
+      if(revealedLettersCount===target.length){
+        setTimeout(()=>{
+          puzzleContainer.style.display="none";
+          completeImage.style.display="block";
+          progressText.textContent="Tebrikler! Ayıya ulaştınız! 🐻";
+        },1000);
       }
     }
-    function uyar(metin){
-      const u=document.createElement('div');u.innerText=metin;
-      u.style.cssText='position:fixed;inset:0;margin:auto;width:fit-content;height:fit-content;font-size:5vh;color:#e74c3c;background:rgba(0,0,0,.7);padding:2vh 4vh;border-radius:20px;z-index:9999;';
-      document.body.appendChild(u);setTimeout(()=>u.remove(),3000);
-    }
-    function placeByClick(val,pieceElem){
-      const w=val;let l=0,placed=false;
-      while(l+w<=targetLength){if(canPlace(l,w)){createPlacedPart(l,w,val,pieceElem.dataset.fruit);placed=true;break}l++}
-      if(!placed)document.getElementById('gameMessage').innerText='Yeterli boşluk yok!'
-    }
-    function makeDraggable(elem){
-      elem.draggable=true;elem.addEventListener('dragstart',e=>{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('val',elem.dataset.val);e.dataTransfer.setData('fruit',elem.dataset.fruit);elem.classList.add('dragging')});elem.addEventListener('dragend',()=>elem.classList.remove('dragging'))
-    }
-    const targetFill=document.getElementById('targetFill');
-    targetFill.addEventListener('dragover',e=>e.preventDefault());
-    targetFill.addEventListener('drop',e=>{
-      e.preventDefault();const val=parseInt(e.dataTransfer.getData('val')),fruit=e.dataTransfer.getData('fruit');
-      if(!serbestMod&&val!==step){uyar('Seçtiğin adımda yalnızca '+step+' birimlik kutular kullanılabilir!');return}
-      const rect=targetFill.getBoundingClientRect(),x=e.clientX-rect.left,ratio=x/rect.width,leftUnit=Math.round(ratio*targetLength),widthUnit=val;
-      if(leftUnit<0||leftUnit+widthUnit>targetLength)return;
-      if(canPlace(leftUnit,widthUnit)){createPlacedPart(leftUnit,widthUnit,val,fruit)}else{document.getElementById('gameMessage').innerText='Bu konuma yerleştirilemez!'}
+  }
+  function updateProgressText(){
+    progressText.textContent=`Görsel kilitli: ${revealedLettersCount}/${target.length} harf`;
+  }
+  function resetThematicPuzzle(){
+    revealedLettersCount=0;
+    puzzleContainer.innerHTML=""; completeImage.style.display="none";
+    progressText.textContent=`Görsel kilitli: 0/${target.length} harf`;
+  }
+
+  /* ---------- DRAG & DROP ---------- */
+  function makeSlotDraggable(slotDiv,letter){
+    slotDiv.draggable=true; slotDiv.dataset.letter=letter;
+    slotDiv.addEventListener("dragstart",e=>{
+      e.dataTransfer.setData("text/plain",letter);
+      e.dataTransfer.effectAllowed="move";
     });
-    function canPlace(l,w){return !placed.some(p=>!(l+w<=p.leftUnit||l>=p.leftUnit+p.widthUnit))}
-    function createPlacedPart(l,w,val,fruit){
-      const part=document.createElement('div');part.className='placedPart';part.style.left=(l/targetLength*100)+'%';part.style.width=(w/targetLength*100)+'%';part.style.backgroundColor=fruitInfo[fruit].color;
-      const nl=document.createElement('div');nl.className='number-label';nl.innerText=val;part.appendChild(nl);
-      const cn=document.createElement('div');cn.className='center-number';cn.innerText=val;part.appendChild(cn);
-      const fc=document.createElement('div');fc.className='fruit-container';
-      for(let i=0;i<val;i++){const s=document.createElement('div');s.className='fruit-segment';s.innerHTML='<span class="fruit-icon">'+fruitInfo[fruit].emoji+'</span>';fc.appendChild(s)}
-      part.appendChild(fc);part.dataset.val=val;part.dataset.leftUnit=l;part.dataset.widthUnit=w;part.dataset.fruit=fruit;
-      part.addEventListener('click',()=>{speak(val+' '+fruitInfo[fruit].name)});
-      targetFill.appendChild(part);placed.push({leftUnit:l,widthUnit:w,val:val,el:part,fruit:fruit});placed.sort((a,b)=>a.leftUnit-b.leftUnit);makePlacedDraggable(part);part.addEventListener('dblclick',()=>removePlacedPart(part));showTotal();
+  }
+  function allowDropOnEmptySlots(){
+    document.querySelectorAll(".slot").forEach(slot=>{
+      if(!slot.textContent){
+        slot.addEventListener("dragover",e=>{e.preventDefault();slot.classList.add("drag-over");});
+        slot.addEventListener("dragleave",e=>slot.classList.remove("drag-over"));
+        slot.addEventListener("drop",e=>{
+          e.preventDefault(); slot.classList.remove("drag-over");
+          const letter=e.dataTransfer.getData("text/plain");
+          const idx=Array.from(wordEl.children).indexOf(slot);
+          if(idx>=0&&!revealed[idx]){
+            revealed[idx]=letter; renderWord();
+            if(revealed.every(c=>c)){
+              statusEl.textContent="Tebrikler! Kelime: "+target.toLocaleUpperCase("tr");
+              renderSyllables();
+            }
+          }
+        });
+      }
+    });
+  }
+
+  /* ---------- OYUN MANTIĞI ---------- */
+  function renderWord(){
+    wordEl.innerHTML="";
+    revealed.forEach((ch,i)=>{
+      const div=document.createElement("div"); div.className="slot";
+      if(ch){ div.textContent=ch.toLocaleUpperCase("tr"); div.classList.add("filled");
+        if(used.get(ch)==="green") makeSlotDraggable(div,ch);
+      }
+      wordEl.appendChild(div);
+    });
+    allowDropOnEmptySlots();
+  }
+  function renderSyllables(){
+    if(!target){syllablesEl.textContent="";return;}
+    let parts=[],i=0;
+    while(i<target.length){
+      let syll="";
+      while(i<target.length&&!VOWELS.has(target[i])){syll+=target[i];i++;}
+      if(i<target.length&&VOWELS.has(target[i])){syll+=target[i];i++;}
+      if(i<target.length&&!VOWELS.has(target[i])){
+        if(i+1<target.length&&VOWELS.has(target[i+1])){}
+        else if(i+1<target.length&&!VOWELS.has(target[i+1])){syll+=target[i];i++;}
+        else{syll+=target[i];i++;}
+      }
+      parts.push(syll);
     }
-    function makePlacedDraggable(elem){
-      let sx=0,sl=0;elem.addEventListener('mousedown',e=>{sx=e.clientX;sl=parseInt(elem.dataset.leftUnit);elem.classList.add('dragging');document.addEventListener('mousemove',onM);document.addEventListener('mouseup',onU);e.preventDefault()});
-      function onM(e){const dx=e.clientX-sx,unit=targetFill.getBoundingClientRect().width/targetLength,dxU=Math.round(dx/unit);let nl=sl+dxU,wu=parseInt(elem.dataset.widthUnit);elem.style.left=(nl/targetLength*100)+'%';removeOverflowBar();if(nl+wu>targetLength){const ow=nl+wu-targetLength;const b=document.createElement('div');b.className='overflowBar';b.style.left='100%';b.style.width=(ow/targetLength*100)+'%';b.innerHTML='<span style="color:white;font-weight:bold;">'+ow+'</span>';targetFill.appendChild(b)}}
-      function onU(e){const dx=e.clientX-sx,unit=targetFill.getBoundingClientRect().width/targetLength,dxU=Math.round(dx/unit);let nl=sl+dxU,wu=parseInt(elem.dataset.widthUnit);removeOverflowBar();if(nl+wu>targetLength||!canPlaceMove(nl,wu,elem)){elem.style.left=(sl/targetLength*100)+'%'}else{elem.dataset.leftUnit=nl;elem.style.left=(nl/targetLength*100)+'%';placed.find(p=>p.el===elem).leftUnit=nl;placed.sort((a,b)=>a.leftUnit-b.leftUnit)}elem.classList.remove('dragging');document.removeEventListener('mousemove',onM);document.removeEventListener('mouseup',onU)}
-    }
-    function removeOverflowBar(){const b=targetFill.querySelector('.overflowBar');if(b)b.remove()}
-    function canPlaceMove(l,w,ex){return !placed.some(p=>p.el!==ex&&!(l+w<=p.leftUnit||l>=p.leftUnit+p.widthUnit))}
-    function removePlacedPart(part){const ix=placed.findIndex(p=>p.el===part);if(ix===-1)return;part.remove();placed.splice(ix,1);showTotal()}
-    function showTotal(){const t=placed.reduce((s,p)=>s+p.val,0);document.getElementById('targetLength').innerHTML=targetLength+' <span style="color:#2ecc71;font-size:28px">(Toplam: '+t+')</span>'}
-  </script>
+    syllablesEl.textContent="Heceler: "+parts.join(" - ");
+  }
+  function renderKeyboard(){
+    keyboardEl.innerHTML="";
+    ALPHABET.forEach(letter=>{
+      const div=document.createElement("div");
+      div.className="key";
+      if(VOWELS.has(letter)) div.classList.add("vowel"); else div.classList.add("consonant");
+      div.textContent=letter.toLocaleUpperCase("tr");
+      div.dataset.letter=letter;
+      if(used.has(letter)){
+        const st=used.get(letter);
+        if(st==="green") div.classList.add("green");
+        else if(st==="red") div.classList.add("red");
+        else div.classList.add("blue");
+      }
+      keyboardEl.appendChild(div);
+    });
+  }
+
+  function startGame(){
+    const n=Number(lengthSelect.value);
+    const w=pickRandomWord(n);
+    if(!w){statusEl.textContent="Bu uzunlukta kelime yok.";return;}
+    target=w; revealed=Array.from({length:w.length},()=>null); used=new Map();
+    renderWord(); renderKeyboard(); syllablesEl.textContent="";
+    statusEl.textContent="Oyun başladı. Harf seçin!";
+    createThematicPuzzle();
+  }
+  function clearGame(){
+    if(!target) return;
+    revealed=Array.from({length:target.length},()=>null); used=new Map();
+    renderWord(); renderKeyboard(); syllablesEl.textContent=""; statusEl.textContent="Kelime sıfırlandı.";
+    resetThematicPuzzle(); createThematicPuzzle();
+  }
+  function handleLetter(letter){
+    if(!target||used.has(letter)) return;
+    const prev=revealed.filter(c=>c).length;
+    if(target.includes(letter)){
+      for(let i=0;i<target.length;i++) if(target[i]===letter) revealed[i]=letter;
+      used.set(letter,"green"); statusEl.textContent="Doğru: "+letter.toLocaleUpperCase("tr");
+    }else{ used.set(letter,"red"); statusEl.textContent="Yanlış: "+letter.toLocaleUpperCase("tr"); }
+    renderWord(); renderKeyboard();
+    const now=revealed.filter(c=>c).length;
+    if(now>prev) revealPuzzlePiece();
+    if(revealed.every(c=>c)){ statusEl.textContent="Tebrikler! Kelime: "+target.toLocaleUpperCase("tr"); renderSyllables(); }
+  }
+
+  /* ---------- EVENTLER ---------- */
+  keyboardEl.addEventListener("click",e=>{
+    const key=e.target.closest(".key"); if(!key) return; handleLetter(key.dataset.letter);
+  });
+  newGameBtn.addEventListener("click",startGame);
+  clearBtn.addEventListener("click",clearGame);
+  guessBtn.addEventListener("click",()=>{
+    if(!target) return;
+    const g=guessInput.value.trim().toLowerCase();
+    if(!g) return;
+    if(g===target){
+      revealed=target.split(""); renderWord();
+      for(let i=0;i<target.length;i++) revealPuzzlePiece();
+      statusEl.textContent="Tebrikler! Kelimeyi bildiniz."; renderSyllables();
+    }else{ statusEl.textContent="Yanlış tahmin!"; }
+  });
+
+function updateWordList(arr){
+  const sorted = [...arr].sort((a,b)=>a.localeCompare(b,"tr"));
+  wordList.innerHTML = "";
+  sorted.forEach((w,i)=>{
+    const li = document.createElement("li");
+    
+    const numSpan = document.createElement("span");
+    numSpan.textContent = `${i+1}. `;
+    numSpan.style.fontSize = "0.7em";   // küçük yazı
+    numSpan.style.fontWeight = "bold";  // kalın
+    numSpan.style.color = "red";        // kırmızı renk
+    
+    li.appendChild(numSpan);
+    li.appendChild(document.createTextNode(w));
+    wordList.appendChild(li);
+  });
+}
+
+const mathBtn = document.getElementById("mathBtn");
+mathBtn.addEventListener("click", () => {
+  window.location.href = "matematik.html";
+});
+
+
+  /* ---------- BAŞLAT ---------- */
+  loadBanks();
+</script>
 </body>
 </html>
