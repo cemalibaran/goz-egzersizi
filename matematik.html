@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Meyveli Çubuklar – 4-6 Yaş (Son)</title>
+  <style>
+    body{font-family:Arial,sans-serif;text-align:center;background:#f9f9f9;transition:background .3s,color .3s}
+    h1{color:#333}
+    .controls button{margin:5px;padding:10px 15px;font-size:16px;cursor:pointer;border:1px solid #999;background:#fff}
+    .controls button.aktif{background:#2ecc71;color:#fff;border-color:#2ecc71}
+    #gameArea{margin-top:30px}
+    #targetWrapper{width:600px;height:50px;border:2px solid #666;margin:10px auto;position:relative;background:#eee;display:flex;overflow:visible}
+    #targetFill{height:100%;width:100%;position:relative}
+    .divider{border-right:2px dashed #666;height:100%;position:absolute;top:0;z-index:5;pointer-events:none}
+    .smallBar{width:50px;height:40px;margin:2px;cursor:pointer;border-radius:5px;color:white;font-weight:bold;display:flex;align-items:center;justify-content:center;user-select:none;font-size:14px;position:relative;overflow:hidden;white-space:nowrap}
+    .placedPart{position:absolute;height:100%;top:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;z-index:3;cursor:grab;overflow:hidden;white-space:nowrap}
+    #pieces{display:flex;justify-content:center;margin-top:10px;flex-wrap:wrap;max-width:900px;margin-left:auto;margin-right:auto}
+    #lengthInput{width:80px;padding:5px;font-size:16px}
+    #buyukSayi{position:fixed;inset:0;background:rgba(0,0,0,.7);color:white;font-size:30vh;display:none;align-items:center;justify-content:center;z-index:999}
+    body.gece{background:#222;color:#eee}
+    body.gece #targetWrapper{border-color:#ccc;background:#444}
+    @keyframes fadeInOut{0%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.5)}}
+    .fruit-icon{font-size:20px;margin:0 1px}
+    .overflowBar{background-color:#ff0000!important;opacity:.7;position:absolute;height:100%;top:0;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;z-index:4}
+    .number-label{position:absolute;top:-25px;left:50%;transform:translateX(-50%);font-size:16px;font-weight:bold;color:#333;z-index:10}
+    .smallBar .number-label{top:-20px;font-size:14px}
+    .fruit-container{display:flex;width:100%;height:100%;position:relative;flex-wrap:wrap;align-items:center;justify-content:center}
+    .fruit-segment{flex:1 0 auto;display:flex;align-items:center;justify-content:center}
+    .center-number{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:bold;color:#000;text-shadow:1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff;z-index:2}
+    #btnSerbest.aktif{background:#2ecc71;color:#fff;border-color:#2ecc71}
+  </style>
+</head>
+<body>
+  <h1>Meyveli Çubuklarla Saymayı Öğreniyorum</h1>
+  <div class="controls">
+    <button onclick="setStepAndStart(1)" id="btn1">1'er</button>
+    <button onclick="setStepAndStart(2)" id="btn2">2'şer</button>
+    <button onclick="setStepAndStart(3)" id="btn3">3'er</button>
+    <button onclick="setStepAndStart(4)" id="btn4">4'er</button>
+    <button onclick="setStepAndStart(5)" id="btn5">5'er</button>
+    <button onclick="toggleTema()">🌞 Gece/Gündüz 🌙</button>
+    <button id="sesBtn" onclick="toggleSes()">🔊 Ses Aç/Kapa</button>
+    <button id="btnSerbest" onclick="toggleSerbest()">Serbest Yerleştir</button>
+    <br>
+    <input type="number" id="lengthInput" placeholder="Hedef" min="1" max="40">
+  </div>
+  <div id="message"></div>
+
+  <div id="gameArea" style="display:none;">
+    <h2>Yerleştirme Oyunu</h2>
+    <p>Hedef uzunluk: <span id="targetLength"></span></p>
+    <div id="targetWrapper">
+      <div id="targetFill"></div>
+    </div>
+    <div id="pieces"></div>
+    <p id="gameMessage"></p>
+  </div>
+  <div id="buyukSayi"></div>
+
+  <script>
+    let step=2,targetLength=0,placed=[],sesAcik=true,serbestMod=false;
+    const fruitInfo={strawberry:{name:'Çilek',color:'#e74c3c',emoji:'🍓'},orange:{name:'Portakal',color:'#f39c12',emoji:'🍊'},tomato:{name:'Domates',color:'#c0392b',emoji:'🍅'},apple:{name:'Elma',color:'#2ecc71',emoji:'🍏'}};
+    const fruitTypes=['strawberry','orange','tomato','apple'];
+
+    function toggleSes(){sesAcik=!sesAcik;document.getElementById('sesBtn').innerText=sesAcik?'🔊 Ses Aç/Kapa':'🔇 Ses Aç/Kapa'}
+    function speak(tr){if(!sesAcik||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(tr);u.lang='tr-TR';u.rate=0.8;speechSynthesis.speak(u)}
+    function toggleTema(){document.body.classList.toggle('gece')}
+    function setStepAndStart(n){
+      step=n;
+      // Aktif buton rengi
+      document.querySelectorAll('.controls button').forEach(b=>b.classList.remove('aktif'));
+      document.getElementById('btn'+n).classList.add('aktif');
+      startGame();
+    }
+    function toggleSerbest(){serbestMod=!serbestMod;const b=document.getElementById('btnSerbest');b.classList.toggle('aktif',serbestMod);b.innerText=serbestMod?'Serbest Yerleştir (AÇIK)':'Serbest Yerleştir (KAPALI)'}
+
+    function startGame(){
+      let v=parseInt(document.getElementById('lengthInput').value)||10;
+      targetLength=v;placed=[];
+      document.getElementById('targetLength').innerHTML=targetLength+' <span style="color:#2ecc71;font-size:28px">(Toplam: 0)</span>';
+      const f=document.getElementById('targetFill');f.innerHTML='';document.getElementById('gameMessage').innerText='';
+      document.getElementById('gameArea').style.display='block';
+      drawDividersOnce();loadPiecesSequential();
+    }
+    function drawDividersOnce(){const f=document.getElementById('targetFill');for(let i=1;i<targetLength;i++){const d=document.createElement('div');d.className='divider';d.style.left=(i/targetLength*100)+'%';f.appendChild(d)}}
+    function loadPiecesSequential(){
+      const p=document.getElementById('pieces');p.innerHTML='';
+      for(let val=1;val<=10;val++){
+        fruitTypes.forEach(fruit=>{
+          const d=document.createElement('div');d.className='smallBar';d.style.width=(val*20)+'px';d.style.backgroundColor=fruitInfo[fruit].color;
+          const nl=document.createElement('div');nl.className='number-label';nl.innerText=val;d.appendChild(nl);
+          const cn=document.createElement('div');cn.className='center-number';cn.innerText=val;d.appendChild(cn);
+          const fc=document.createElement('div');fc.className='fruit-container';
+          // Tam sayıda meyve göster
+          for(let i=0;i<val;i++){const s=document.createElement('div');s.className='fruit-segment';s.innerHTML='<span class="fruit-icon">'+fruitInfo[fruit].emoji+'</span>';fc.appendChild(s)}
+          d.appendChild(fc);d.dataset.val=val;d.dataset.fruit=fruit;
+          d.addEventListener('click',()=>{speak(val+' '+fruitInfo[fruit].name);if(!serbestMod&&val!==step){uyar('Seçtiğin adımda yalnızca '+step+' birimlik kutular kullanılabilir!');return}placeByClick(val,d)});
+          makeDraggable(d);p.appendChild(d);
+        })
+      }
+    }
+    function uyar(metin){
+      const u=document.createElement('div');u.innerText=metin;
+      u.style.cssText='position:fixed;inset:0;margin:auto;width:fit-content;height:fit-content;font-size:5vh;color:#e74c3c;background:rgba(0,0,0,.7);padding:2vh 4vh;border-radius:20px;z-index:9999;';
+      document.body.appendChild(u);setTimeout(()=>u.remove(),3000);
+    }
+    function placeByClick(val,pieceElem){
+      const w=val;let l=0,placed=false;
+      while(l+w<=targetLength){if(canPlace(l,w)){createPlacedPart(l,w,val,pieceElem.dataset.fruit);placed=true;break}l++}
+      if(!placed)document.getElementById('gameMessage').innerText='Yeterli boşluk yok!'
+    }
+    function makeDraggable(elem){
+      elem.draggable=true;elem.addEventListener('dragstart',e=>{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('val',elem.dataset.val);e.dataTransfer.setData('fruit',elem.dataset.fruit);elem.classList.add('dragging')});elem.addEventListener('dragend',()=>elem.classList.remove('dragging'))
+    }
+    const targetFill=document.getElementById('targetFill');
+    targetFill.addEventListener('dragover',e=>e.preventDefault());
+    targetFill.addEventListener('drop',e=>{
+      e.preventDefault();const val=parseInt(e.dataTransfer.getData('val')),fruit=e.dataTransfer.getData('fruit');
+      if(!serbestMod&&val!==step){uyar('Seçtiğin adımda yalnızca '+step+' birimlik kutular kullanılabilir!');return}
+      const rect=targetFill.getBoundingClientRect(),x=e.clientX-rect.left,ratio=x/rect.width,leftUnit=Math.round(ratio*targetLength),widthUnit=val;
+      if(leftUnit<0||leftUnit+widthUnit>targetLength)return;
+      if(canPlace(leftUnit,widthUnit)){createPlacedPart(leftUnit,widthUnit,val,fruit)}else{document.getElementById('gameMessage').innerText='Bu konuma yerleştirilemez!'}
+    });
+    function canPlace(l,w){return !placed.some(p=>!(l+w<=p.leftUnit||l>=p.leftUnit+p.widthUnit))}
+    function createPlacedPart(l,w,val,fruit){
+      const part=document.createElement('div');part.className='placedPart';part.style.left=(l/targetLength*100)+'%';part.style.width=(w/targetLength*100)+'%';part.style.backgroundColor=fruitInfo[fruit].color;
+      const nl=document.createElement('div');nl.className='number-label';nl.innerText=val;part.appendChild(nl);
+      const cn=document.createElement('div');cn.className='center-number';cn.innerText=val;part.appendChild(cn);
+      const fc=document.createElement('div');fc.className='fruit-container';
+      for(let i=0;i<val;i++){const s=document.createElement('div');s.className='fruit-segment';s.innerHTML='<span class="fruit-icon">'+fruitInfo[fruit].emoji+'</span>';fc.appendChild(s)}
+      part.appendChild(fc);part.dataset.val=val;part.dataset.leftUnit=l;part.dataset.widthUnit=w;part.dataset.fruit=fruit;
+      part.addEventListener('click',()=>{speak(val+' '+fruitInfo[fruit].name)});
+      targetFill.appendChild(part);placed.push({leftUnit:l,widthUnit:w,val:val,el:part,fruit:fruit});placed.sort((a,b)=>a.leftUnit-b.leftUnit);makePlacedDraggable(part);part.addEventListener('dblclick',()=>removePlacedPart(part));showTotal();
+    }
+    function makePlacedDraggable(elem){
+      let sx=0,sl=0;elem.addEventListener('mousedown',e=>{sx=e.clientX;sl=parseInt(elem.dataset.leftUnit);elem.classList.add('dragging');document.addEventListener('mousemove',onM);document.addEventListener('mouseup',onU);e.preventDefault()});
+      function onM(e){const dx=e.clientX-sx,unit=targetFill.getBoundingClientRect().width/targetLength,dxU=Math.round(dx/unit);let nl=sl+dxU,wu=parseInt(elem.dataset.widthUnit);elem.style.left=(nl/targetLength*100)+'%';removeOverflowBar();if(nl+wu>targetLength){const ow=nl+wu-targetLength;const b=document.createElement('div');b.className='overflowBar';b.style.left='100%';b.style.width=(ow/targetLength*100)+'%';b.innerHTML='<span style="color:white;font-weight:bold;">'+ow+'</span>';targetFill.appendChild(b)}}
+      function onU(e){const dx=e.clientX-sx,unit=targetFill.getBoundingClientRect().width/targetLength,dxU=Math.round(dx/unit);let nl=sl+dxU,wu=parseInt(elem.dataset.widthUnit);removeOverflowBar();if(nl+wu>targetLength||!canPlaceMove(nl,wu,elem)){elem.style.left=(sl/targetLength*100)+'%'}else{elem.dataset.leftUnit=nl;elem.style.left=(nl/targetLength*100)+'%';placed.find(p=>p.el===elem).leftUnit=nl;placed.sort((a,b)=>a.leftUnit-b.leftUnit)}elem.classList.remove('dragging');document.removeEventListener('mousemove',onM);document.removeEventListener('mouseup',onU)}
+    }
+    function removeOverflowBar(){const b=targetFill.querySelector('.overflowBar');if(b)b.remove()}
+    function canPlaceMove(l,w,ex){return !placed.some(p=>p.el!==ex&&!(l+w<=p.leftUnit||l>=p.leftUnit+p.widthUnit))}
+    function removePlacedPart(part){const ix=placed.findIndex(p=>p.el===part);if(ix===-1)return;part.remove();placed.splice(ix,1);showTotal()}
+    function showTotal(){const t=placed.reduce((s,p)=>s+p.val,0);document.getElementById('targetLength').innerHTML=targetLength+' <span style="color:#2ecc71;font-size:28px">(Toplam: '+t+')</span>'}
+  </script>
+</body>
+</html>
