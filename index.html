@@ -9,9 +9,11 @@
     .container{max-width:900px;margin:auto}
     .controls{margin-bottom:20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .word{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
-    .slot{width:40px;height:50px;border:2px solid #444;display:flex;align-items:center;justify-content:center;font-size:22px;background:#fff;transition:border .25s}
+    .slot{width:40px;height:50px;border:2px solid #444;display:flex;align-items:center;justify-content:center;font-size:22px;background:#fff;transition:all .3s}
     .slot.drag-over{border:3px solid #3b82f6 !important}
     .slot.filled{background:#e0ffe0}
+    .slot.correct-animation{animation:correctPulse 0.6s ease-in-out}
+    .slot.wrong-animation{animation:wrongShake 0.4s ease-in-out}
     .keyboard{display:grid;grid-template-columns:repeat(11,1fr);gap:6px}
     .key{padding:16px;font-size:20px;background:#e2e8f0;text-align:center;border-radius:8px;cursor:pointer;user-select:none;transition:background 0.3s,color 0.3s}
     .key.used{cursor:not-allowed}
@@ -31,7 +33,30 @@
     .puzzle-revealed{opacity:0}
     #completeImage{display:none;width:100%;height:100%;object-fit:cover}
     .progress-text{text-align:center;font-weight:bold;margin-top:10px;color:#1e40af}
-
+    
+    /* Animasyonlar */
+    @keyframes correctPulse{
+      0%{background-color:#e0ffe0;transform:scale(1)}
+      50%{background-color:#a0ffa0;transform:scale(1.1);box-shadow:0 0 10px #22c55e}
+      100%{background-color:#e0ffe0;transform:scale(1)}
+    }
+    @keyframes wrongShake{
+      0%{transform:translateX(0);background-color:#fff}
+      25%{transform:translateX(-5px);background-color:#ffcccc}
+      50%{transform:translateX(5px);background-color:#ff9999}
+      75%{transform:translateX(-3px);background-color:#ff6666}
+      100%{transform:translateX(0);background-color:#fff}
+    }
+    @keyframes keyCorrect{
+      0%{background-color:#22c55e;transform:scale(1)}
+      50%{background-color:#16a34a;transform:scale(1.1)}
+      100%{background-color:#22c55e;transform:scale(1)}
+    }
+    @keyframes keyWrong{
+      0%{background-color:#ef4444;transform:scale(1)}
+      50%{background-color:#dc2626;transform:scale(1.1)}
+      100%{background-color:#ef4444;transform:scale(1)}
+    }
 
   #wordList {
     display: grid;
@@ -49,8 +74,6 @@
     text-align: left;
     font-weight: 500;
   }
-
-
 
   </style>
 </head>
@@ -180,7 +203,6 @@ const DEFAULT_ISIM = [
   "kucaklamak", "korkmak", "cesaretlenmek", "dinlenmek"
 ];
 
-
   // Havuz yükleme
   function loadBanks(){
     BANK_ISIM  = JSON.parse(localStorage.getItem("BANK_ISIM"))  || DEFAULT_ISIM;
@@ -201,7 +223,6 @@ const DEFAULT_ISIM = [
     poolLabel.textContent = poolSelect.options[poolSelect.selectedIndex].text;
     updateWordList(pool);
   }
-
 
   // Seçili havuzu döndür
   function getCurrentPool(){
@@ -238,87 +259,183 @@ const DEFAULT_ISIM = [
   }
 
   /* ---------- TEMATİK GÖRSEL ---------- */
-// 300×200 → 200×130
-const BEAR_IMAGE = "data:image/svg+xml;base64," +
-btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
-  <rect width="100%" height="100%" fill="#785cb4"/>
-  <circle cx="53"  cy="39" r="26" fill="#5ca378"/>
-  <circle cx="147" cy="39" r="26" fill="#5ca378"/>
-  <circle cx="100" cy="65" r="39" fill="#5ca378"/>
-  <circle cx="80"  cy="52" r="10" fill="#fff"/>
-  <circle cx="120" cy="52" r="10" fill="#fff"/>
-  <circle cx="80"  cy="52" r="3"  fill="#000"/>
-  <circle cx="120" cy="52" r="3"  fill="#000"/>
-  <ellipse cx="100" cy="78" rx="10" ry="6" fill="#500"/>
-</svg>`);
+  // Kategoriye göre farklı görseller
+  const THEMATIC_IMAGES = {
+    isim: "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
+      <rect width="100%" height="100%" fill="#4f46e5"/>
+      <rect x="60" y="40" width="80" height="60" fill="#fbbf24" stroke="#000" stroke-width="2"/>
+      <rect x="70" y="50" width="20" height="20" fill="#60a5fa"/>
+      <rect x="110" y="50" width="20" height="20" fill="#60a5fa"/>
+      <rect x="85" y="75" width="30" height="15" fill="#dc2626"/>
+      <polygon points="100,20 140,40 60,40" fill="#a16207"/>
+    </svg>`),
+    
+    sifat: "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
+      <rect width="100%" height="100%" fill="#7c3aed"/>
+      <circle cx="100" cy="65" r="40" fill="#fbbf24" stroke="#000" stroke-width="2"/>
+      <circle cx="85" cy="55" r="5" fill="#000"/>
+      <circle cx="115" cy="55" r="5" fill="#000"/>
+      <path d="M85 80 Q100 90 115 80" stroke="#000" stroke-width="3" fill="none"/>
+      <polygon points="100,30 110,50 90,50" fill="#dc2626"/>
+      <polygon points="100,100 110,80 90,80" fill="#dc2626"/>
+    </svg>`),
+    
+    fiil: "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
+      <rect width="100%" height="100%" fill="#059669"/>
+      <circle cx="80" cy="65" r="25" fill="#fbbf24" stroke="#000" stroke-width="2"/>
+      <circle cx="120" cy="65" r="25" fill="#fbbf24" stroke="#000" stroke-width="2"/>
+      <line x1="55" y1="65" x2="25" y2="65" stroke="#000" stroke-width="3"/>
+      <line x1="145" y1="65" x2="175" y2="65" stroke="#000" stroke-width="3"/>
+      <circle cx="70" cy="60" r="5" fill="#000"/>
+      <circle cx="110" cy="60" r="5" fill="#000"/>
+      <path d="M65 75 Q80 85 95 75" stroke="#000" stroke-width="2" fill="none"/>
+      <path d="M105 75 Q120 85 135 75" stroke="#000" stroke-width="2" fill="none"/>
+    </svg>`),
+    
+    karma: "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
+      <rect width="100%" height="100%" fill="#dc2626"/>
+      <circle cx="100" cy="65" r="40" fill="#fbbf24" stroke="#000" stroke-width="2"/>
+      <circle cx="85" cy="55" r="8" fill="#fff"/>
+      <circle cx="115" cy="55" r="8" fill="#fff"/>
+      <circle cx="85" cy="55" r="4" fill="#000"/>
+      <circle cx="115" cy="55" r="4" fill="#000"/>
+      <path d="M85 80 Q100 90 115 80" stroke="#000" stroke-width="3" fill="none"/>
+      <polygon points="100,40 110,30 120,40 115,55 105,55" fill="#ef4444"/>
+    </svg>`)
+  };
+
+  function getThematicImage(){
+    return THEMATIC_IMAGES[poolSelect.value] || THEMATIC_IMAGES.karma;
+  }
 
   function createThematicPuzzle(){
     puzzleContainer.innerHTML="";
     completeImage.style.display="none";
-    completeImage.src=BEAR_IMAGE;
-    const pieceCount=target.length;
-    const rows=Math.ceil(Math.sqrt(pieceCount));
-    const cols=Math.ceil(pieceCount/rows);
-    const pieceW=100/cols, pieceH=100/rows;
-    for(let i=0;i<pieceCount;i++){
-      const r=Math.floor(i/cols), c=i%cols;
-      const piece=document.createElement("div");
-      piece.className="puzzle-piece";
-      piece.style.setProperty("--img",`url(${BEAR_IMAGE})`);
-      piece.style.setProperty("--rows",rows);
-      piece.style.setProperty("--cols",cols);
-      piece.style.setProperty("--pos",`${c*pieceW}% ${r*pieceH}%`);
-      const mask=document.createElement("div");
-      mask.className="puzzle-mask"; mask.id=`mask-${i}`;
-      piece.appendChild(mask); puzzleContainer.appendChild(piece);
+    const imageSrc = getThematicImage();
+    completeImage.src = imageSrc;
+    const pieceCount = target.length;
+    const rows = Math.ceil(Math.sqrt(pieceCount));
+    const cols = Math.ceil(pieceCount/rows);
+    const pieceW = 100/cols, pieceH = 100/rows;
+    
+    for(let i=0; i<pieceCount; i++){
+      const r = Math.floor(i/cols), c = i%cols;
+      const piece = document.createElement("div");
+      piece.className = "puzzle-piece";
+      piece.style.setProperty("--img", `url(${imageSrc})`);
+      piece.style.setProperty("--rows", rows);
+      piece.style.setProperty("--cols", cols);
+      piece.style.setProperty("--pos", `${c*pieceW}% ${r*pieceH}%`);
+      const mask = document.createElement("div");
+      mask.className = "puzzle-mask";
+      mask.id = `mask-${i}`;
+      piece.appendChild(mask);
+      puzzleContainer.appendChild(piece);
     }
-    revealedLettersCount=0; updateProgressText();
+    revealedLettersCount = 0;
+    updateProgressText();
   }
+
   function revealPuzzlePiece(){
-    if(revealedLettersCount<target.length){
-      const m=document.getElementById(`mask-${revealedLettersCount}`);
-      if(m) m.classList.add("puzzle-revealed");
+    if(revealedLettersCount < target.length){
+      const mask = document.getElementById(`mask-${revealedLettersCount}`);
+      if(mask) mask.classList.add("puzzle-revealed");
       revealedLettersCount++;
       updateProgressText();
-      if(revealedLettersCount===target.length){
+      if(revealedLettersCount === target.length){
         setTimeout(()=>{
-          puzzleContainer.style.display="none";
-          completeImage.style.display="block";
-          progressText.textContent="Tebrikler! Ayıya ulaştınız! 🐻";
-        },1000);
+          puzzleContainer.style.display = "none";
+          completeImage.style.display = "block";
+          const categoryNames = {
+            isim: "Ev", 
+            sifat: "Yıldız", 
+            fiil: "Hareket Eden Adam", 
+            karma: "Ayıcık"
+          };
+          progressText.textContent = `Tebrikler! ${categoryNames[poolSelect.value] || "Görsel"} tamamlandı!`;
+        }, 1000);
       }
     }
   }
+
   function updateProgressText(){
-    progressText.textContent=`Görsel kilitli: ${revealedLettersCount}/${target.length} harf`;
+    progressText.textContent = `Görsel kilitli: ${revealedLettersCount}/${target.length} harf`;
   }
+
   function resetThematicPuzzle(){
-    revealedLettersCount=0;
-    puzzleContainer.innerHTML=""; completeImage.style.display="none";
-    progressText.textContent=`Görsel kilitli: 0/${target.length} harf`;
+    revealedLettersCount = 0;
+    puzzleContainer.innerHTML = "";
+    completeImage.style.display = "none";
+    progressText.textContent = `Görsel kilitli: 0/${target.length} harf`;
+  }
+
+  /* ---------- ANİMASYON FONKSİYONLARI ---------- */
+  function animateCorrectSlot(index){
+    const slot = wordEl.children[index];
+    if(slot){
+      slot.classList.add("correct-animation");
+      setTimeout(() => {
+        slot.classList.remove("correct-animation");
+      }, 600);
+    }
+  }
+
+  function animateWrongSlot(index){
+    const slot = wordEl.children[index];
+    if(slot){
+      slot.classList.add("wrong-animation");
+      setTimeout(() => {
+        slot.classList.remove("wrong-animation");
+      }, 400);
+    }
+  }
+
+  function animateKey(letter, isCorrect){
+    const key = document.querySelector(`.key[data-letter="${letter}"]`);
+    if(key){
+      if(isCorrect){
+        key.style.animation = "keyCorrect 0.6s ease-in-out";
+      } else {
+        key.style.animation = "keyWrong 0.6s ease-in-out";
+      }
+      setTimeout(() => {
+        key.style.animation = "";
+      }, 600);
+    }
   }
 
   /* ---------- DRAG & DROP ---------- */
-  function makeSlotDraggable(slotDiv,letter){
-    slotDiv.draggable=true; slotDiv.dataset.letter=letter;
-    slotDiv.addEventListener("dragstart",e=>{
-      e.dataTransfer.setData("text/plain",letter);
-      e.dataTransfer.effectAllowed="move";
+  function makeSlotDraggable(slotDiv, letter){
+    slotDiv.draggable = true;
+    slotDiv.dataset.letter = letter;
+    slotDiv.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", letter);
+      e.dataTransfer.effectAllowed = "move";
     });
   }
+
   function allowDropOnEmptySlots(){
-    document.querySelectorAll(".slot").forEach(slot=>{
+    document.querySelectorAll(".slot").forEach(slot => {
       if(!slot.textContent){
-        slot.addEventListener("dragover",e=>{e.preventDefault();slot.classList.add("drag-over");});
-        slot.addEventListener("dragleave",e=>slot.classList.remove("drag-over"));
-        slot.addEventListener("drop",e=>{
-          e.preventDefault(); slot.classList.remove("drag-over");
-          const letter=e.dataTransfer.getData("text/plain");
-          const idx=Array.from(wordEl.children).indexOf(slot);
-          if(idx>=0&&!revealed[idx]){
-            revealed[idx]=letter; renderWord();
-            if(revealed.every(c=>c)){
-              statusEl.textContent="Tebrikler! Kelime: "+target.toLocaleUpperCase("tr");
+        slot.addEventListener("dragover", e => {
+          e.preventDefault();
+          slot.classList.add("drag-over");
+        });
+        slot.addEventListener("dragleave", e => {
+          slot.classList.remove("drag-over");
+        });
+        slot.addEventListener("drop", e => {
+          e.preventDefault();
+          slot.classList.remove("drag-over");
+          const letter = e.dataTransfer.getData("text/plain");
+          const idx = Array.from(wordEl.children).indexOf(slot);
+          if(idx >= 0 && !revealed[idx]){
+            revealed[idx] = letter;
+            renderWord();
+            animateCorrectSlot(idx);
+            
+            if(revealed.every(c => c)){
+              statusEl.textContent = "Tebrikler! Kelime: " + target.toLocaleUpperCase("tr");
               renderSyllables();
             }
           }
@@ -329,118 +446,217 @@ btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130">
 
   /* ---------- OYUN MANTIĞI ---------- */
   function renderWord(){
-    wordEl.innerHTML="";
-    revealed.forEach((ch,i)=>{
-      const div=document.createElement("div"); div.className="slot";
-      if(ch){ div.textContent=ch.toLocaleUpperCase("tr"); div.classList.add("filled");
-        if(used.get(ch)==="green") makeSlotDraggable(div,ch);
+    wordEl.innerHTML = "";
+    revealed.forEach((ch, i) => {
+      const div = document.createElement("div");
+      div.className = "slot";
+      if(ch){
+        div.textContent = ch.toLocaleUpperCase("tr");
+        div.classList.add("filled");
+        if(used.get(ch) === "green"){
+          makeSlotDraggable(div, ch);
+        }
       }
       wordEl.appendChild(div);
     });
     allowDropOnEmptySlots();
   }
+
   function renderSyllables(){
-    if(!target){syllablesEl.textContent="";return;}
-    let parts=[],i=0;
-    while(i<target.length){
-      let syll="";
-      while(i<target.length&&!VOWELS.has(target[i])){syll+=target[i];i++;}
-      if(i<target.length&&VOWELS.has(target[i])){syll+=target[i];i++;}
-      if(i<target.length&&!VOWELS.has(target[i])){
-        if(i+1<target.length&&VOWELS.has(target[i+1])){}
-        else if(i+1<target.length&&!VOWELS.has(target[i+1])){syll+=target[i];i++;}
-        else{syll+=target[i];i++;}
+    if(!target){
+      syllablesEl.textContent = "";
+      return;
+    }
+    let parts = [], i = 0;
+    while(i < target.length){
+      let syll = "";
+      while(i < target.length && !VOWELS.has(target[i])){
+        syll += target[i];
+        i++;
+      }
+      if(i < target.length && VOWELS.has(target[i])){
+        syll += target[i];
+        i++;
+      }
+      if(i < target.length && !VOWELS.has(target[i])){
+        if(i+1 < target.length && VOWELS.has(target[i+1])){}
+        else if(i+1 < target.length && !VOWELS.has(target[i+1])){
+          syll += target[i];
+          i++;
+        } else {
+          syll += target[i];
+          i++;
+        }
       }
       parts.push(syll);
     }
-    syllablesEl.textContent="Heceler: "+parts.join(" - ");
+    syllablesEl.textContent = "Heceler: " + parts.join(" - ");
   }
+
   function renderKeyboard(){
-    keyboardEl.innerHTML="";
-    ALPHABET.forEach(letter=>{
-      const div=document.createElement("div");
-      div.className="key";
-      if(VOWELS.has(letter)) div.classList.add("vowel"); else div.classList.add("consonant");
-      div.textContent=letter.toLocaleUpperCase("tr");
-      div.dataset.letter=letter;
+    keyboardEl.innerHTML = "";
+    ALPHABET.forEach(letter => {
+      const div = document.createElement("div");
+      div.className = "key";
+      if(VOWELS.has(letter)) div.classList.add("vowel");
+      else div.classList.add("consonant");
+      div.textContent = letter.toLocaleUpperCase("tr");
+      div.dataset.letter = letter;
+      
       if(used.has(letter)){
-        const st=used.get(letter);
-        if(st==="green") div.classList.add("green");
-        else if(st==="red") div.classList.add("red");
+        const st = used.get(letter);
+        if(st === "green") div.classList.add("green");
+        else if(st === "red") div.classList.add("red");
         else div.classList.add("blue");
       }
+      
       keyboardEl.appendChild(div);
     });
   }
 
   function startGame(){
-    const n=Number(lengthSelect.value);
-    const w=pickRandomWord(n);
-    if(!w){statusEl.textContent="Bu uzunlukta kelime yok.";return;}
-    target=w; revealed=Array.from({length:w.length},()=>null); used=new Map();
-    renderWord(); renderKeyboard(); syllablesEl.textContent="";
-    statusEl.textContent="Oyun başladı. Harf seçin!";
+    const n = Number(lengthSelect.value);
+    const w = pickRandomWord(n);
+    if(!w){
+      statusEl.textContent = "Bu uzunlukta kelime yok.";
+      return;
+    }
+    target = w;
+    revealed = Array.from({length: w.length}, () => null);
+    used = new Map();
+    renderWord();
+    renderKeyboard();
+    syllablesEl.textContent = "";
+    statusEl.textContent = "Oyun başladı. Harf seçin!";
     createThematicPuzzle();
   }
+
   function clearGame(){
     if(!target) return;
-    revealed=Array.from({length:target.length},()=>null); used=new Map();
-    renderWord(); renderKeyboard(); syllablesEl.textContent=""; statusEl.textContent="Kelime sıfırlandı.";
-    resetThematicPuzzle(); createThematicPuzzle();
-  }
-  function handleLetter(letter){
-    if(!target||used.has(letter)) return;
-    const prev=revealed.filter(c=>c).length;
-    if(target.includes(letter)){
-      for(let i=0;i<target.length;i++) if(target[i]===letter) revealed[i]=letter;
-      used.set(letter,"green"); statusEl.textContent="Doğru: "+letter.toLocaleUpperCase("tr");
-    }else{ used.set(letter,"red"); statusEl.textContent="Yanlış: "+letter.toLocaleUpperCase("tr"); }
-    renderWord(); renderKeyboard();
-    const now=revealed.filter(c=>c).length;
-    if(now>prev) revealPuzzlePiece();
-    if(revealed.every(c=>c)){ statusEl.textContent="Tebrikler! Kelime: "+target.toLocaleUpperCase("tr"); renderSyllables(); }
+    revealed = Array.from({length: target.length}, () => null);
+    used = new Map();
+    renderWord();
+    renderKeyboard();
+    syllablesEl.textContent = "";
+    statusEl.textContent = "Kelime sıfırlandı.";
+    resetThematicPuzzle();
+    createThematicPuzzle();
   }
 
-  /* ---------- EVENTLER ---------- */
-  keyboardEl.addEventListener("click",e=>{
-    const key=e.target.closest(".key"); if(!key) return; handleLetter(key.dataset.letter);
-  });
-  newGameBtn.addEventListener("click",startGame);
-  clearBtn.addEventListener("click",clearGame);
-  guessBtn.addEventListener("click",()=>{
-    if(!target) return;
-    const g=guessInput.value.trim().toLowerCase();
-    if(!g) return;
-    if(g===target){
-      revealed=target.split(""); renderWord();
-      for(let i=0;i<target.length;i++) revealPuzzlePiece();
-      statusEl.textContent="Tebrikler! Kelimeyi bildiniz."; renderSyllables();
-    }else{ statusEl.textContent="Yanlış tahmin!"; }
-  });
 
-function updateWordList(arr){
-  const sorted = [...arr].sort((a,b)=>a.localeCompare(b,"tr"));
-  wordList.innerHTML = "";
-  sorted.forEach((w,i)=>{
-    const li = document.createElement("li");
-    
-    const numSpan = document.createElement("span");
-    numSpan.textContent = `${i+1}. `;
-    numSpan.style.fontSize = "0.7em";   // küçük yazı
-    numSpan.style.fontWeight = "bold";  // kalın
-    numSpan.style.color = "red";        // kırmızı renk
-    
-    li.appendChild(numSpan);
-    li.appendChild(document.createTextNode(w));
-    wordList.appendChild(li);
-  });
+
+
+
+
+function handleLetter(letter){
+  if(!target || used.has(letter)) return;
+
+  // Hangi pozisyonlar yeni olarak açıldıysa onları topla
+  const newlyRevealed = [];
+
+  if(target.includes(letter)){
+    for(let i = 0; i < target.length; i++){
+      if(target[i] === letter && !revealed[i]){
+        revealed[i] = letter;
+        newlyRevealed.push(i);
+      }
+    }
+
+    used.set(letter, "green");
+    statusEl.textContent = "Doğru: " + letter.toLocaleUpperCase("tr");
+    animateKey(letter, true);
+
+    // Doğru pozisyon animasyonları
+    newlyRevealed.forEach((idx, j) => {
+      setTimeout(() => animateCorrectSlot(idx), 100 * j);
+    });
+
+    // Her yeni açılan harf için ayrı ayrı puzzle parçası aç
+    newlyRevealed.forEach((_, j) => {
+      setTimeout(() => revealPuzzlePiece(), 150 * j);
+    });
+
+  } else {
+    used.set(letter, "red");
+    statusEl.textContent = "Yanlış: " + letter.toLocaleUpperCase("tr");
+    animateKey(letter, false);
+
+    const emptySlots = revealed.map((val, idx) => val ? -1 : idx).filter(idx => idx !== -1);
+    if(emptySlots.length > 0){
+      animateWrongSlot(emptySlots[0]);
+    }
+  }
+
+  renderWord();
+  renderKeyboard();
+
+  if(revealed.every(c => c)){
+    statusEl.textContent = "Tebrikler! Kelime: " + target.toLocaleUpperCase("tr");
+    renderSyllables();
+  }
 }
 
-const mathBtn = document.getElementById("mathBtn");
-mathBtn.addEventListener("click", () => {
-  window.location.href = "matematik.html";
-});
 
+
+
+
+
+  /* ---------- EVENTLER ---------- */
+  keyboardEl.addEventListener("click", e => {
+    const key = e.target.closest(".key");
+    if(!key) return;
+    handleLetter(key.dataset.letter);
+  });
+  
+  newGameBtn.addEventListener("click", startGame);
+  clearBtn.addEventListener("click", clearGame);
+  
+  guessBtn.addEventListener("click", () => {
+    if(!target) return;
+    const g = guessInput.value.trim().toLowerCase();
+    if(!g) return;
+    if(g === target){
+      revealed = target.split("");
+      renderWord();
+      for(let i = 0; i < target.length; i++){
+        setTimeout(() => {
+          animateCorrectSlot(i);
+          revealPuzzlePiece();
+        }, i * 100);
+      }
+      statusEl.textContent = "Tebrikler! Kelimeyi bildiniz.";
+      renderSyllables();
+    } else {
+      statusEl.textContent = "Yanlış tahmin!";
+      // Yanlış tahmin animasyonu
+      for(let i = 0; i < target.length; i++){
+        setTimeout(() => animateWrongSlot(i), i * 50);
+      }
+    }
+  });
+
+  function updateWordList(arr){
+    const sorted = [...arr].sort((a,b) => a.localeCompare(b, "tr"));
+    wordList.innerHTML = "";
+    sorted.forEach((w, i) => {
+      const li = document.createElement("li");
+      
+      const numSpan = document.createElement("span");
+      numSpan.textContent = `${i+1}. `;
+      numSpan.style.fontSize = "0.7em";
+      numSpan.style.fontWeight = "bold";
+      numSpan.style.color = "red";
+      
+      li.appendChild(numSpan);
+      li.appendChild(document.createTextNode(w));
+      wordList.appendChild(li);
+    });
+  }
+
+  const mathBtn = document.getElementById("mathBtn");
+  mathBtn.addEventListener("click", () => {
+    window.location.href = "matematik.html";
+  });
 
   /* ---------- BAŞLAT ---------- */
   loadBanks();
